@@ -30,6 +30,7 @@ Current features are:
  * JMS connection factories monitoring
  * SIB queues depth monitoring
  * HTTP sessions monitoring
+ * Servlets service time monitoring
  * Clustering support
 
 Concepts
@@ -362,8 +363,8 @@ Which will give you this result:
     emea.fr.hydre2.was.h2srv1.threadPool.WebContainer.currentPoolSize 0 1357237139
     emea.fr.hydre2.was.h2srv1.threadPool.WebContainer.maximumPoolSize 50 1357237139
 
-If metric names contain characters that can not be used in a metric scheme (like "." and "/"), they will be replaced by
-an underscore.
+You can group different options in a single query. If metric names contain characters that can not be used in a metric
+scheme (like "." and "/"), they will be replaced by an underscore.
 
 ### Options
 
