@@ -62,7 +62,7 @@ public class SIBQueueTest extends TestUtils implements Test {
         long depth;
 
         try {
-            Set<ObjectName> mbeans = proxy.getMBeans("WebSphere:type=SIBQueuePoint,*");
+            Set<ObjectName> mbeans = proxy.getMBeans("WebSphere:*,type=SIBQueuePoint");
             for (ObjectName mbean : mbeans) {
                 identifier = (String)proxy.getAttribute(mbean, "identifier");
                 if (skip(identifier)) {

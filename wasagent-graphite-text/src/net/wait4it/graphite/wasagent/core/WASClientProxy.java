@@ -101,7 +101,7 @@ public class WASClientProxy {
 
         // We need the perf MBean to query stats objects or other MBeans
         // The server MBean is used to retrieve the logical instance name
-        serverMBean = getMBean("WebSphere:type=Server,*");
+        serverMBean = getMBean("WebSphere:*,type=Server");
         perfMBean = getMBean("WebSphere:*,type=Perf");
     }
 
