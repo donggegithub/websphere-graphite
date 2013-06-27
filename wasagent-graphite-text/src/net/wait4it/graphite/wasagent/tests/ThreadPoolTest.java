@@ -35,6 +35,7 @@ import net.wait4it.graphite.wasagent.core.WASClientProxy;
  *   - The thread pool current size
  *   - The thread pool maximum size
  *   - The active thread count
+ *   - The hung thread count
  * 
  * @author Yann Lambret
  *      
