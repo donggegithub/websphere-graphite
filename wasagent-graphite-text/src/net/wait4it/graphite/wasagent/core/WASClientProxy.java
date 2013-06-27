@@ -57,7 +57,7 @@ public class WASClientProxy {
     // Loads WebSphere generic configuration
     static {
         try {
-            stream = new FileInputStream("websphere.properties");
+            stream = new FileInputStream(System.getProperty("wasagent.configuration"));
             defaults.load(stream);
         } catch (Exception e) {
             e.printStackTrace();
