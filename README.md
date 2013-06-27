@@ -2,7 +2,8 @@ WAS Agent
 =========
 
 A network tool for WebSphere Application Server monitoring, that provides performance statistics in a suitable format for
-[Graphite][graphite].
+[Graphite][graphite]. The "text" version displays plain text data on the standard output, whereas the "amqp" version 
+is able to communicate with Carbon through an AMQP broker.
 
 * [Features](#features)
 * [Concepts](#concepts)
@@ -66,6 +67,10 @@ For each JVM you want to monitor, you have to enable the following statistics:
     Servlet Session Manager.LiveCount
     Web Applications.ServiceTime
 
+For WAS 7.0 and WAS 8.x only, you can also enable this one:
+
+    Thread Pools.ConcurrentHungThreadCount
+
 You can find below a sample Jython script to set the appropriate configuration with wsadmin.
 It works with WAS 6.1, 7.0 and 8.x:
 
@@ -77,13 +82,13 @@ node_name = 'hydre2'
 server_name = 'h2srv1'
 
 # PMI statistics values
-stats = { 'jvmRuntimeModule'      : '1,3,5',
-          'threadPoolModule'      : '3,4',
-          'transactionModule'     : '4',
-          'connectionPoolModule'  : '5,6,7',
-          'j2cModule'             : '5,6,7',
-          'servletSessionsModule' : '7',
-          'webAppModule'          : '13' }
+stats = { 'jvmRuntimeModule'     : '1,3,5',
+          'threadPoolModule'     : '3,4,8',
+          'transactionModule'    : '4',
+          'connectionPoolModule' : '5,6,7',
+          'j2cModule'            : '5,6,7',
+          'servletSessionsModule': '7',
+          'webAppModule'         : '13' }
 
 # Recursive function to configure the whole PMI subtree
 def set_pmimodules(module, value):
@@ -136,7 +141,7 @@ If you want to make runtime tests, you can use the following snippets:
 
 ```python
 # wasagent PMI settings script
-# Use only with WAS 8.x and 7.x versions
+# Use only with WAS 8.x and 7.0 versions
 
 # Change these values
 node_name = 'hydre2'
@@ -151,7 +156,7 @@ params = ['jvmRuntimeModule=1,3,5', java.lang.Boolean('true')]
 AdminControl.invoke(perf_name, 'setCustomSetString', params, signature)
 
 # Thread pools settings
-params = ['threadPoolModule=3,4', java.lang.Boolean('true')]
+params = ['threadPoolModule=3,4,8', java.lang.Boolean('true')]
 AdminControl.invoke(perf_name, 'setCustomSetString', params, signature)
 
 # Transactions settings
