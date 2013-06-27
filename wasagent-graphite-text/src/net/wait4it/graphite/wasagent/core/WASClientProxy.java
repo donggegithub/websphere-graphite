@@ -134,6 +134,16 @@ public class WASClientProxy {
     }
 
     /**
+     * Gets the target application server version.
+     * 
+     * @return the product version for the target instance
+     * @throws Exception
+     */
+    public String getServerVersion() throws Exception {
+        return (String)getAttribute(serverMBean, "platformVersion");
+    }
+
+    /**
      * Gets a set of MBeans.
      * 
      * @param  query
