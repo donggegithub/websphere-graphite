@@ -35,6 +35,7 @@ import net.wait4it.graphite.wasagent.core.WASClientProxy;
  *   - The thread pool current size
  *   - The thread pool maximum size
  *   - The active thread count
+ *   - The hung thread count
  * 
  * @author Yann Lambret
  *      
@@ -56,6 +57,7 @@ public class ThreadPoolTest extends TestUtils implements Test {
         long activeCount;
         long currentPoolSize;
         long maximumPoolSize;
+        long hungCount;
 
         try {
             WSStats stats = proxy.getStats(WSThreadPoolStats.NAME);
@@ -70,6 +72,11 @@ public class ThreadPoolTest extends TestUtils implements Test {
                         output.add("threadPool." + name + ".activeCount " + activeCount);
                         output.add("threadPool." + name + ".currentPoolSize " + currentPoolSize);
                         output.add("threadPool." + name + ".maximumPoolSize " + maximumPoolSize);
+                        // Hung thread detection, only for WAS 7.0 & 8.x
+                        if (proxy.getServerVersion().matches("^[78]\\..*")) {
+                            hungCount = getRangeStats(substat, WSThreadPoolStats.ConcurrentHungThreadCount).getCurrent();
+                            output.add("threadPool." + name + ".hungCount " + hungCount);                 
+                        }
                     }
                 }
             }
