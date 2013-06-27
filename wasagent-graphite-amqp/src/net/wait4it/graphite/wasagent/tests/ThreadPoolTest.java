@@ -54,6 +54,7 @@ public class ThreadPoolTest extends TestUtils implements Test {
         List<String> pools = Arrays.asList(params.split(","));
         List<String> output = new ArrayList<String>();
         String name;
+
         long activeCount;
         long currentPoolSize;
         long maximumPoolSize;

@@ -33,9 +33,9 @@ import org.eclipse.jetty.servlet.ServletHolder;
 public class WASAgent {
 
     public static void main(String[] args) throws Exception {
-        // Jetty server connector is created from plugin arguments
-        String host = args[0];
-        int port = Integer.parseInt(args[1]);
+        // Jetty server connector is created from JVM properties
+        String host = System.getProperty("wasagent.host");
+        int port = Integer.parseInt(System.getProperty("wasagent.port"));
 
         // Jetty server setup
         Server server = new Server();
