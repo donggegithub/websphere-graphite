@@ -82,20 +82,20 @@ node_name = 'hydre2'
 server_name = 'h2srv1'
 
 # PMI statistics values
-stats = { 'jvmRuntimeModule'     : '1,3,5',
-          'threadPoolModule'     : '3,4,8',
-          'transactionModule'    : '4',
-          'connectionPoolModule' : '5,6,7',
-          'j2cModule'            : '5,6,7',
+stats = { 'jvmRuntimeModule': '1,3,5',
+          'threadPoolModule': '3,4,8',
+          'transactionModule': '4',
+          'connectionPoolModule': '5,6,7',
+          'j2cModule': '5,6,7',
           'servletSessionsModule': '7',
-          'webAppModule'         : '13' }
+          'webAppModule': '13' }
 
 # Recursive function to configure the whole PMI subtree
 def set_pmimodules(module, value):
     AdminConfig.modify(module, [['enable', value]])
     pmimodules = AdminConfig.showAttribute(module, 'pmimodules')
     if pmimodules != '[]':
-        pmimodules = pmimodules[1:len(pmimodules)-1]
+        pmimodules = pmimodules[1:-1]
         pmimodules = pmimodules.split(' ')
         for pmimodule in pmimodules:
             set_pmimodules(pmimodule, value)
@@ -121,7 +121,7 @@ AdminConfig.modify(pmi_service, params)
 print 'ok.'
 
 modules = AdminConfig.showAttribute(pmi_module, 'pmimodules')
-modules = modules[1:len(modules)-1]
+modules = modules[1:-1]
 modules = modules.split(' ')
 
 print '\nEnabling specific PMI counters...'
@@ -341,9 +341,11 @@ We get the following output:
     hydre2.h2srv1.jvm.maximumHeapSize 256 1357230342
     hydre2.h2srv1.threadPool.Default.activeCount 2 1357230342
     hydre2.h2srv1.threadPool.Default.currentPoolSize 4 1357230342
+    hydre2.h2srv1.threadPool.Default.hungCount 0 1357230342
     hydre2.h2srv1.threadPool.Default.maximumPoolSize 20 1357230342
     hydre2.h2srv1.threadPool.WebContainer.activeCount 0 1357230342
     hydre2.h2srv1.threadPool.WebContainer.currentPoolSize 0 1357230342
+    hydre2.h2srv1.threadPool.WebContainer.hungCount 0 1357230342
     hydre2.h2srv1.threadPool.WebContainer.maximumPoolSize 50 1357230342
 
 By default, the metric scheme is build as follows:
@@ -363,9 +365,11 @@ Which will give you this result:
     emea.fr.hydre2.was.h2srv1.jvm.maximumHeapSize 256 1357237139
     emea.fr.hydre2.was.h2srv1.threadPool.Default.activeCount 1 1357237139
     emea.fr.hydre2.was.h2srv1.threadPool.Default.currentPoolSize 4 1357237139
+    emea.fr.hydre2.was.h2srv1.threadPool.Default.hungCount 0 1357237139
     emea.fr.hydre2.was.h2srv1.threadPool.Default.maximumPoolSize 20 1357237139
     emea.fr.hydre2.was.h2srv1.threadPool.WebContainer.activeCount 0 1357237139
     emea.fr.hydre2.was.h2srv1.threadPool.WebContainer.currentPoolSize 0 1357237139
+    emea.fr.hydre2.was.h2srv1.threadPool.WebContainer.hungCount 0 1357237139
     emea.fr.hydre2.was.h2srv1.threadPool.WebContainer.maximumPoolSize 50 1357237139
 
 You can group different options in a single query. If metric names contain characters that can not be used in a metric
@@ -409,36 +413,47 @@ thread pool list. The following output is produced when the wildcard character i
 
     threadPool.Default.activeCount
     threadPool.Default.currentPoolSize
+    threadPool.Default.hungCount
     threadPool.Default.maximumPoolSize
     threadPool.HAManager_thread_pool.activeCount
     threadPool.HAManager_thread_pool.currentPoolSize
+    threadPool.HAManager_thread_pool.hungCount
     threadPool.HAManager_thread_pool.maximumPoolSize
     threadPool.MessageListenerThreadPool.activeCount
     threadPool.MessageListenerThreadPool.currentPoolSize
+    threadPool.MessageListenerThreadPool.hungCount
     threadPool.MessageListenerThreadPool.maximumPoolSize
     threadPool.ORB_thread_pool.activeCount
     threadPool.ORB_thread_pool.currentPoolSize
+    threadPool.ORB_thread_pool.hungCount
     threadPool.ORB_thread_pool.maximumPoolSize
     threadPool.ProcessDiscovery.activeCount
     threadPool.ProcessDiscovery.currentPoolSize
+    threadPool.ProcessDiscovery.hungCount
     threadPool.ProcessDiscovery.maximumPoolSize
     threadPool.SIBFAPInboundThreadPool.activeCount
     threadPool.SIBFAPInboundThreadPool.currentPoolSize
+    threadPool.SIBFAPInboundThreadPool.hungCount
     threadPool.SIBFAPInboundThreadPool.maximumPoolSize
     threadPool.SIBFAPThreadPool.activeCount
     threadPool.SIBFAPThreadPool.currentPoolSize
+    threadPool.SIBFAPThreadPool.hungCount
     threadPool.SIBFAPThreadPool.maximumPoolSize
     threadPool.SoapConnectorThreadPool.activeCount
     threadPool.SoapConnectorThreadPool.currentPoolSize
+    threadPool.SoapConnectorThreadPool.hungCount
     threadPool.SoapConnectorThreadPool.maximumPoolSize
     threadPool.TCPChannel_DCS.activeCount
     threadPool.TCPChannel_DCS.currentPoolSize
+    threadPool.TCPChannel_DCS.hungCount
     threadPool.TCPChannel_DCS.maximumPoolSize
     threadPool.WMQJCAResourceAdapter.activeCount
     threadPool.WMQJCAResourceAdapter.currentPoolSize
+    threadPool.WMQJCAResourceAdapter.hungCount
     threadPool.WMQJCAResourceAdapter.maximumPoolSize
     threadPool.WebContainer.activeCount
     threadPool.WebContainer.currentPoolSize
+    threadPool.WebContainer.hungCount
     threadPool.WebContainer.maximumPoolSize
 
 #### jta (optional)
