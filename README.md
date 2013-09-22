@@ -1,9 +1,8 @@
 WAS Agent
 =========
 
-A network tool for WebSphere Application Server monitoring, that provides performance statistics in a suitable format for
-[Graphite][graphite]. The "text" version displays plain text data on the standard output, whereas the "amqp" version 
-is able to communicate with Carbon through an AMQP broker.
+A network tool for WebSphere Application Server monitoring, that provides performance statistics in a suitable format
+for [Graphite][graphite].
 
 * [Features](#features)
 * [Concepts](#concepts)
@@ -37,9 +36,9 @@ Current features are:
 Concepts
 --------
 
-WAS Agent relies on the use of WebSphere Performance Monitoring infrastructure (PMI), as well as the regular JMX API.
-The agent embedds a small Jetty container, and the monitoring itself is made through simple HTTP requests. This approach 
-allows short response times for monitoring queries, and a very low resource consumption.
+WAS Agent relies on the use of WebSphere Performance Monitoring infrastructure (PMI), as well as the regular
+JMX API. The agent embedds a small Jetty container, and the monitoring itself is made through simple HTTP requests.
+This approach allows short response times for monitoring queries, and a very low resource consumption.
 
 Prerequisites
 -------------
@@ -236,9 +235,9 @@ Installing WAS Agent
 
 ### Build
 
-Download a zip archive of the master branch by using the link on this page. The two directories we are interested in are
-'src' and 'lib'. First things first, copy the WebSphere admin client jar in the lib directory. You can find the required
-file in the 'runtimes' directory of your product installation.
+Download a zip archive of the master branch by using the link on this page. The two directories we are interested in
+are 'src' and 'lib'. First things first, copy the WebSphere admin client jar in the lib directory. You can find the
+required file in the 'runtimes' directory of your product installation.
 
 WAS 8.0:
 
@@ -474,8 +473,8 @@ datasource list. It produces the following output:
     
 #### jms (optional)
 
-This option takes a comma separated list of JMS connection factory names, or a wildcard character (`jms=*`) for the whole
-connection factory list. It produces the following output:
+This option takes a comma separated list of JMS connection factory names, or a wildcard character (`jms=*`) for the
+whole connection factory list. It produces the following output:
 
     jms.<item>.activeCount
     jms.<item>.currentPoolSize
