@@ -15,6 +15,7 @@
  * along with Wasagent. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+
 package net.wait4it.graphite.wasagent.tests;
 
 import java.util.ArrayList;
@@ -22,7 +23,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.ibm.websphere.pmi.stat.WSBoundedRangeStatistic;
 import com.ibm.websphere.pmi.stat.WSJCAConnectionPoolStats;
+import com.ibm.websphere.pmi.stat.WSRangeStatistic;
 import com.ibm.websphere.pmi.stat.WSStats;
 
 import net.wait4it.graphite.wasagent.core.WASClientProxy;
@@ -52,42 +55,58 @@ public class JMSTest extends TestUtils implements Test {
      * @return output a list of strings for collected data
      */
     public List<String> run(WASClientProxy proxy, String params) {
+        // HTTP query params
         List<String> factories = Arrays.asList(params.split(","));
+
+        // Graphite data
         List<String> output = new ArrayList<String>();
+
+        // JMS factory name
         String name;
-        long maximumPoolSize;
-        long currentPoolSize;
-        long freePoolSize;
-        long waitingThreadCount;
-        long activeCount;
+
+        // PMI stats
+        WSStats stats;
+        WSBoundedRangeStatistic ps;
+        WSBoundedRangeStatistic fps;
+        WSRangeStatistic wtc;
+
+        // Performance data
+        long maximumPoolSize, currentPoolSize, freePoolSize, waitingThreadCount, activeCount;
 
         try {
-            WSStats stats = proxy.getStats(WSJCAConnectionPoolStats.NAME);
-            if (stats != null) {
-                WSStats[] substats1 = stats.getSubStats(); // JMS provider level
-                for (WSStats substat1 : substats1) {
-                    if (substat1.getName().equals("SIB JMS Resource Adapter") || substat1.getName().equals("WebSphere MQ JMS Provider")) {
-                        WSStats[] substats2 = substat1.getSubStats(); // JCA factory level
-                        for (WSStats substat2 : substats2) {
-                            if (factories.contains("*") || factories.contains(substat2.getName())) {
-                                maximumPoolSize = getBoundedRangeStats(substat2, WSJCAConnectionPoolStats.PoolSize).getUpperBound();
-                                currentPoolSize = getBoundedRangeStats(substat2, WSJCAConnectionPoolStats.PoolSize).getCurrent();
-                                freePoolSize = getBoundedRangeStats(substat2, WSJCAConnectionPoolStats.FreePoolSize).getCurrent();
-                                waitingThreadCount = getRangeStats(substat2, WSJCAConnectionPoolStats.WaitingThreadCount).getCurrent();
-                                activeCount = currentPoolSize - freePoolSize;
-                                name = normalize(substat2.getName());
-                                output.add("jms." + name + ".activeCount " + activeCount);
-                                output.add("jms." + name + ".currentPoolSize " + currentPoolSize);
-                                output.add("jms." + name + ".maximumPoolSize " + maximumPoolSize);
-                                output.add("jms." + name + ".waitingThreadCount " + waitingThreadCount);
-                            }
+            stats = proxy.getStats(WSJCAConnectionPoolStats.NAME);
+        } catch (Exception ignored) {
+            return output;
+        }    
+
+        WSStats[] stats1 = stats.getSubStats(); // JMS provider level
+        for (WSStats stat1 : stats1) {
+            if (stat1.getName().equals("SIB JMS Resource Adapter") || stat1.getName().equals("WebSphere MQ JMS Provider")) {
+                WSStats[] stats2 = stat1.getSubStats(); // JCA factory level
+                for (WSStats stat2 : stats2) {
+
+                    if (factories.contains("*") || factories.contains(stat2.getName())) {
+                        ps = (WSBoundedRangeStatistic)stat2.getStatistic(WSJCAConnectionPoolStats.PoolSize);
+                        fps = (WSBoundedRangeStatistic)stat2.getStatistic(WSJCAConnectionPoolStats.FreePoolSize);
+                        wtc = (WSRangeStatistic)stat2.getStatistic(WSJCAConnectionPoolStats.WaitingThreadCount);
+                        try {
+                            currentPoolSize = ps.getCurrent();
+                            maximumPoolSize = ps.getUpperBound();
+                            freePoolSize = fps.getCurrent();
+                            waitingThreadCount = wtc.getCurrent();
+                            activeCount = currentPoolSize - freePoolSize;
+                        } catch (NullPointerException e) {
+                            throw new RuntimeException("invalid 'JCA Connection Pools' PMI settings.");
                         }
+
+                        name = normalize(stat2.getName());
+                        output.add("jms." + name + ".activeCount " + activeCount);
+                        output.add("jms." + name + ".currentPoolSize " + currentPoolSize);
+                        output.add("jms." + name + ".maximumPoolSize " + maximumPoolSize);
+                        output.add("jms." + name + ".waitingThreadCount " + waitingThreadCount);
                     }
                 }
             }
-        } catch (Exception ignored) {
-            // PMI settings may be wrong.
-            // Anyway, we don't want to pollute the output.
         }
 
         Collections.sort(output);

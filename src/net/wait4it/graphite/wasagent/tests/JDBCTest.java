@@ -15,6 +15,7 @@
  * along with Wasagent. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+
 package net.wait4it.graphite.wasagent.tests;
 
 import java.util.ArrayList;
@@ -22,7 +23,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.ibm.websphere.pmi.stat.WSBoundedRangeStatistic;
 import com.ibm.websphere.pmi.stat.WSJDBCConnectionPoolStats;
+import com.ibm.websphere.pmi.stat.WSRangeStatistic;
 import com.ibm.websphere.pmi.stat.WSStats;
 
 import net.wait4it.graphite.wasagent.core.WASClientProxy;
@@ -43,13 +46,6 @@ import net.wait4it.graphite.wasagent.core.WASClientProxy;
  */
 public class JDBCTest extends TestUtils implements Test {
 
-    // No statistics for WAS internal datasources
-    private static final List<String> EXCLUSIONS = new ArrayList<String>();
-
-    static {
-        EXCLUSIONS.add("jdbc/DefaultEJBTimerDataSource");
-    }
-
     /**
      * WebSphere JDBC datasources stats.
      * 
@@ -59,43 +55,61 @@ public class JDBCTest extends TestUtils implements Test {
      * @return output a list of strings for collected data
      */
     public List<String> run(WASClientProxy proxy, String params) {
+        // HTTP query params
         List<String> datasources = Arrays.asList(params.split(","));
+
+        // Graphite data
         List<String> output = new ArrayList<String>();
+
+        // Datasource name
         String name;
-        long maximumPoolSize;
-        long currentPoolSize;
-        long freePoolSize;
-        long waitingThreadCount;
-        long activeCount;
+
+        // PMI stats
+        WSStats stats;
+        WSBoundedRangeStatistic ps;
+        WSBoundedRangeStatistic fps;
+        WSRangeStatistic wtc;
+
+        // Performance data
+        long currentPoolSize, maximumPoolSize, freePoolSize, waitingThreadCount, activeCount;
 
         try {
-            WSStats stats = proxy.getStats(WSJDBCConnectionPoolStats.NAME);
-            if (stats != null) {
-                WSStats[] substats1 = stats.getSubStats(); // JDBC Provider level
-                for (WSStats substat1 : substats1) {
-                    WSStats[] substats2 = substat1.getSubStats(); // DataSource level
-                    for (WSStats substat2 : substats2) {
-                        if (EXCLUSIONS.contains(substat2.getName())) {
-                            continue;
-                        }
-                        if (datasources.contains("*") || datasources.contains(substat2.getName())) {
-                            maximumPoolSize = getBoundedRangeStats(substat2, WSJDBCConnectionPoolStats.PoolSize).getUpperBound();
-                            currentPoolSize = getBoundedRangeStats(substat2, WSJDBCConnectionPoolStats.PoolSize).getCurrent();
-                            freePoolSize = getBoundedRangeStats(substat2, WSJDBCConnectionPoolStats.FreePoolSize).getCurrent();
-                            waitingThreadCount = getRangeStats(substat2, WSJDBCConnectionPoolStats.WaitingThreadCount).getCurrent();
-                            activeCount = currentPoolSize - freePoolSize;
-                            name = normalize(substat2.getName());
-                            output.add("jdbc." + name + ".activeCount " + activeCount);
-                            output.add("jdbc." + name + ".currentPoolSize " + currentPoolSize);
-                            output.add("jdbc." + name + ".maximumPoolSize " + maximumPoolSize);
-                            output.add("jdbc." + name + ".waitingThreadCount " + waitingThreadCount);
-                        }
+            stats = proxy.getStats(WSJDBCConnectionPoolStats.NAME);
+        } catch (Exception ignored) {
+            return output;
+        }
+
+        WSStats[] stats1 = stats.getSubStats(); // JDBC Provider level
+        for (WSStats stat1 : stats1) {
+            WSStats[] stats2 = stat1.getSubStats(); // DataSource level
+            for (WSStats stat2 : stats2) {
+
+                // No statistics for WAS internal datasources
+                if (stat2.getName().matches("jdbc/DefaultEJBTimerDataSource")) {
+                    continue;
+                }
+
+                if (datasources.contains("*") || datasources.contains(stat2.getName())) {
+                    ps = (WSBoundedRangeStatistic)stat2.getStatistic(WSJDBCConnectionPoolStats.PoolSize);
+                    fps = (WSBoundedRangeStatistic)stat2.getStatistic(WSJDBCConnectionPoolStats.FreePoolSize);
+                    wtc = (WSRangeStatistic)stat2.getStatistic(WSJDBCConnectionPoolStats.WaitingThreadCount);
+                    try {
+                        currentPoolSize = ps.getCurrent();
+                        maximumPoolSize = ps.getUpperBound();
+                        freePoolSize = fps.getCurrent();
+                        waitingThreadCount = wtc.getCurrent();
+                        activeCount = currentPoolSize - freePoolSize;
+                    } catch (NullPointerException e) {
+                        throw new RuntimeException("invalid 'JDBC Connection Pools' PMI settings.");
                     }
+
+                    name = normalize(stat2.getName());
+                    output.add("jdbc." + name + ".activeCount " + activeCount);
+                    output.add("jdbc." + name + ".currentPoolSize " + currentPoolSize);
+                    output.add("jdbc." + name + ".maximumPoolSize " + maximumPoolSize);
+                    output.add("jdbc." + name + ".waitingThreadCount " + waitingThreadCount);
                 }
             }
-        } catch (Exception ignored) {
-            // PMI settings may be wrong.
-            // Anyway, we don't want to pollute the output.
         }
 
         Collections.sort(output);

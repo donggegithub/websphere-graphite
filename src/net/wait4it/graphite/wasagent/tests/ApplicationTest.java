@@ -15,6 +15,7 @@
  * along with Wasagent. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+
 package net.wait4it.graphite.wasagent.tests;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.ibm.websphere.pmi.stat.WSRangeStatistic;
 import com.ibm.websphere.pmi.stat.WSSessionManagementStats;
 import com.ibm.websphere.pmi.stat.WSStats;
 
@@ -36,13 +38,6 @@ import net.wait4it.graphite.wasagent.core.WASClientProxy;
  */
 public class ApplicationTest extends TestUtils implements Test {
 
-    // No statistics for WAS internal components
-    private static final List<String> EXCLUSIONS = new ArrayList<String>();
-
-    static {
-        EXCLUSIONS.add("ibmasyncrsp#ibmasyncrsp.war");
-    }
-
     /**
      * WebSphere applications stats.
      * 
@@ -52,29 +47,45 @@ public class ApplicationTest extends TestUtils implements Test {
      * @return output a list of strings for collected data
      */
     public List<String> run(WASClientProxy proxy, String params) {
+        // HTTP query params
         List<String> applications = Arrays.asList(params.split(","));
+
+        // Graphite data
         List<String> output = new ArrayList<String>();
+
+        // Application name
         String name;
+
+        // PMI stats
+        WSStats stats;
+        WSRangeStatistic lc;
+
+        // Performance data
         long liveCount;
 
         try {
-            WSStats stats = proxy.getStats(WSSessionManagementStats.NAME);
-            if (stats != null) {
-                WSStats[] substats = stats.getSubStats();
-                for (WSStats substat : substats) {
-                    if (EXCLUSIONS.contains(substat.getName())) {
-                        continue;
-                    }
-                    if (applications.contains("*") || applications.contains(substat.getName())) {
-                        liveCount = getRangeStats(stats, WSSessionManagementStats.LiveCount).getCurrent();
-                        name = normalize(substat.getName());
-                        output.add("application." + name + ".liveCount " + liveCount);
-                    }
-                }
-            }
+            stats = proxy.getStats(WSSessionManagementStats.NAME);
         } catch (Exception ignored) {
-            // PMI settings may be wrong.
-            // Anyway, we don't want to pollute the output.
+            return output;
+        }
+
+        WSStats[] stats1 = stats.getSubStats();
+        for (WSStats stat1 : stats1) {
+
+            if (stat1.getName().matches("ibmasyncrsp#ibmasyncrsp.war")) {
+                continue;
+            }
+
+            if (applications.contains("*") || applications.contains(stat1.getName())) {
+                lc = (WSRangeStatistic)stat1.getStatistic(WSSessionManagementStats.LiveCount);
+                try {
+                    liveCount = lc.getCurrent();
+                } catch (NullPointerException e) {
+                    throw new RuntimeException("invalid 'Servlet Session Manager' PMI settings.");
+                }
+                name = normalize(stat1.getName());
+                output.add("application." + name + ".liveCount " + liveCount);
+            }
         }
 
         Collections.sort(output);

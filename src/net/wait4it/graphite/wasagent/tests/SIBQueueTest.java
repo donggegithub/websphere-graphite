@@ -15,6 +15,7 @@
  * along with Wasagent. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+
 package net.wait4it.graphite.wasagent.tests;
 
 import java.util.ArrayList;
@@ -37,15 +38,6 @@ import net.wait4it.graphite.wasagent.core.WASClientProxy;
  */
 public class SIBQueueTest extends TestUtils implements Test {
 
-    // No statistics for WAS internal components
-    private static final List<String> EXCLUSIONS = new ArrayList<String>();
-
-    static {
-        EXCLUSIONS.add("^_PSIMP\\.PROXY\\.QUEUE.*");
-        EXCLUSIONS.add("^_PSIMP\\.TDRECEIVER.*");
-        EXCLUSIONS.add("^_PTRM.*");
-    }
-
     /**
      * WebSphere SIB queues stats.
      * 
@@ -55,46 +47,41 @@ public class SIBQueueTest extends TestUtils implements Test {
      * @return output a list of strings for collected data
      */
     public List<String> run(WASClientProxy proxy, String params) {
+        // HTTP query params
         List<String> queues = Arrays.asList(params.split(","));
+
+        // Graphite data
         List<String> output = new ArrayList<String>();
-        String identifier;
+
+        // Queue 
         String name;
+
+        // Performance data
         long depth;
 
         try {
             Set<ObjectName> mbeans = proxy.getMBeans("WebSphere:*,type=SIBQueuePoint");
             for (ObjectName mbean : mbeans) {
-                identifier = (String)proxy.getAttribute(mbean, "identifier");
-                if (skip(identifier)) {
+                name = (String)proxy.getAttribute(mbean, "identifier");
+
+                // No statistics for WAS internal components
+                if (name.matches("^_PSIMP.*||^_PTRM.*")) {
                     continue;
                 }
-                if (queues.contains("*") || queues.contains(identifier)) {
+
+                if (queues.contains("*") || queues.contains(name)) {
                     depth = (Long)proxy.getAttribute(mbean, "depth");
-                    name = normalize(identifier);
+                    name = normalize(name);
                     output.add("SIBQueue." + name + ".depth " + depth);
                 }
             }
         } catch (Exception ignored) {
-            // Don't want to pollute the output.
+            output.clear();
+            return output;
         }
 
         Collections.sort(output);
         return output;
-    }
-
-    /**
-     * 
-     * @param  identifier the name of the SIB queue
-     * @return true if the given queue belongs to
-     *         the EXCLUSIONS list, false otherwise
-     */
-    private Boolean skip(String identifier) {
-        for (String pattern : EXCLUSIONS) {
-            if (identifier.matches(pattern)) {
-                return true;
-            }
-        }
-        return false;
     }
 
 }

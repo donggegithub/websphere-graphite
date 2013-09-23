@@ -15,41 +15,16 @@
  * along with Wasagent. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+
 package net.wait4it.graphite.wasagent.tests;
 
-import com.ibm.websphere.pmi.stat.WSBoundedRangeStatistic;
-import com.ibm.websphere.pmi.stat.WSCountStatistic;
-import com.ibm.websphere.pmi.stat.WSRangeStatistic;
-import com.ibm.websphere.pmi.stat.WSStats;
-import com.ibm.websphere.pmi.stat.WSTimeStatistic;
-
 /**
- * Convenient methods to access PMI individual stats.
+ * Convenient methods for test classes.
  * 
  * @author Yann Lambret
  *
  */
 public abstract class TestUtils {
-
-    public static WSBoundedRangeStatistic getBoundedRangeStats(WSStats stats, int stat) {
-        return (WSBoundedRangeStatistic)stats.getStatistic(stat);
-    }
-
-    public static WSCountStatistic getCountStats(WSStats stats, int stat) {
-        return (WSCountStatistic)stats.getStatistic(stat);
-    }
-
-    public static WSRangeStatistic getRangeStats(WSStats stats, int stat) {
-        return (WSRangeStatistic)stats.getStatistic(stat);
-    }
-
-    public static WSTimeStatistic getTimeStats(WSStats stats, int stat) {
-        return (WSTimeStatistic)stats.getStatistic(stat);
-    }
-
-    public static long format(long value) {
-        return (value/1024);
-    }
 
     /**
      * Removes undesirable characters ('/' and '.')

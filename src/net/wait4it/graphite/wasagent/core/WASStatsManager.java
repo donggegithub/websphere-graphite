@@ -15,6 +15,7 @@
  * along with Wasagent. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+
 package net.wait4it.graphite.wasagent.core;
 
 import java.util.List;
@@ -73,11 +74,11 @@ public class WASStatsManager {
                     metrics = option.getTest().run(proxy, params.get(option.getName()));
                     for (String metric : metrics) {
                         output.append(prefix)
-                        .append(hostName).append(".")
+                        .append(hostName + ".")
                         .append(suffix)
-                        .append(serverName).append(".")
-                        .append(metric).append(" ")
-                        .append(now).append(System.getProperty("line.separator"));
+                        .append(serverName + ".")
+                        .append(metric + " ")
+                        .append(now + System.getProperty("line.separator"));
                     }
                 }
             }

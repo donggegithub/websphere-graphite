@@ -15,11 +15,13 @@
  * along with Wasagent. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+
 package net.wait4it.graphite.wasagent.tests;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ibm.websphere.pmi.stat.WSCountStatistic;
 import com.ibm.websphere.pmi.stat.WSJTAStats;
 import com.ibm.websphere.pmi.stat.WSStats;
 
@@ -41,17 +43,31 @@ public class JTATest extends TestUtils implements Test {
      * @return output a list of strings for collected data
      */
     public List<String> run(WASClientProxy proxy, String params) {
+        // Graphite data
         List<String> output = new ArrayList<String>();
+
+        // PMI stats
+        WSStats stats;
+        WSCountStatistic ac;
+
+        // Performance data
         long activeCount;
 
         try {
-            WSStats stats = proxy.getStats(WSJTAStats.NAME);
-            activeCount = getCountStats(stats, WSJTAStats.ActiveCount).getCount();
-            output.add("jta.activeCount " + activeCount);
+            stats = proxy.getStats(WSJTAStats.NAME);
         } catch (Exception ignored) {
-            // stats object may be null, or PMI settings may be wrong.
-            // Anyway, we don't want to pollute the output.
+            return output;
         }
+
+        ac = (WSCountStatistic)stats.getStatistic(WSJTAStats.ActiveCount);
+
+        try {
+            activeCount = ac.getCount();
+        } catch (NullPointerException e) {
+            throw new RuntimeException("invalid 'Transaction Manager' PMI settings.");
+        }
+
+        output.add("jta.activeCount " + activeCount);
 
         return output;
     }
