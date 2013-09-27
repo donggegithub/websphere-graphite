@@ -313,7 +313,7 @@ javax.net.ssl.keyStoreType=PKCS12
 Using WAS Agent
 ---------------
 
-### Sarting the agent
+### Starting the agent
 
 Amend the 'run.sh' script to set the path of your JRE installation, and type:
 
